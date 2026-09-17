@@ -5,10 +5,8 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -29,7 +27,6 @@ import androidx.compose.ui.unit.dp
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //enableEdgeToEdge()
         setContent {
             MainActivityUI()
         }
@@ -51,46 +48,78 @@ fun MainActivityUI() {
 
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.Top,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row{
-            Text("Operando 1", modifier = Modifier.padding(horizontal = 16.dp))
-            Text("Operando 2", modifier = Modifier.padding(horizontal = 16.dp))
-            Text("Resultado", modifier = Modifier.padding(horizontal = 16.dp))
-        }
         Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextField(
-                value = operando1,
-                onValueChange = { operando1 = it },
-                modifier = Modifier.width(90.dp).height(50.dp)
+            verticalAlignment = Alignment.CenterVertically,
+
+            ) {
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text("Operando 1")
+                TextField(
+                    value = operando1,
+                    onValueChange = { operando1 = it },
+                    modifier = Modifier
+                        .width(85.dp)
+                        .height(46.dp)
+                )
+            }
+
+            Text(
+                text = "+", modifier = Modifier.padding(top = 20.dp)
             )
 
-            Text("+", modifier = Modifier.padding(horizontal = 10.dp))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text("Operando 2")
+                TextField(
+                    value = operando2,
+                    onValueChange = { operando2 = it },
+                    modifier = Modifier
+                        .width(85.dp)
+                        .height(46.dp)
+                )
+            }
 
-            TextField(
-                value = operando2,
-                onValueChange = { operando2 = it },
-                modifier = Modifier.width(90.dp).height(50.dp)
+            Text(
+                text = "=", modifier = Modifier.padding(top = 20.dp)
             )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 4.dp)
+            ) {
+                Text("Resultado")
 
-            Text("=", modifier = Modifier.padding(horizontal = 10.dp))
-
-            TextField(
-                value = resultado,
-                onValueChange = { },
-                modifier = Modifier.width(90.dp).height(50.dp)
-            )
+                TextField(
+                    value = resultado,
+                    onValueChange = { },
+                    modifier = Modifier
+                        .width(85.dp)
+                        .height(46.dp)
+                )
+            }
         }
-        Row {
-            Button(onClick = {
-                operando1 = ""
-                operando2 = ""
-                resultado = ""
-            }, modifier = Modifier.padding(horizontal = 16.dp)) {
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(
+                onClick = {
+                    operando1 = ""
+                    operando2 = ""
+                    resultado = ""
+                },
+                modifier = Modifier.padding(end = 12.dp)
+            ) {
                 Text("Limpiar")
             }
 
@@ -98,13 +127,13 @@ fun MainActivityUI() {
                 val n1 = operando1.toIntOrNull() ?: 0
                 val n2 = operando2.toIntOrNull() ?: 0
                 resultado = (n1 + n2).toString()
-            },modifier = Modifier.padding(horizontal = 16.dp)) {
+            },
+                modifier = Modifier.padding(start = 12.dp)
+            ) {
                 Text("Calcular")
             }
         }
-        Text(getAndroidId(contexto))
+
+        Text(text = getAndroidId(contexto))
     }
 }
-
-
-
