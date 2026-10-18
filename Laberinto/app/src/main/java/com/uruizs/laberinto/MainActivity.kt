@@ -8,15 +8,21 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.uruizs.laberinto.ui.theme.LaberintoTheme
 import kotlin.math.max
 import kotlin.math.min
@@ -124,6 +130,14 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         },
                         modifier = Modifier.padding(innerPadding)
                     )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 80.dp, start = 150.dp),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        MainActivityUi()
+                    }
                 }
             }
         }
@@ -234,5 +248,16 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 data class WallNorm(val startX: Float, val startY: Float, val endX: Float, val endY: Float)
 data class GoalNorm(val left: Float, val top: Float, val right: Float, val bottom: Float)
 
+fun getAndroidId(contexto: Context): String {
+    return Settings.Secure.getString(
+        contexto.contentResolver, Settings.Secure.ANDROID_ID
+    ) ?: "DESCONOCIDO"
+}
 @Composable
-fun MainActivityUi() {}
+fun MainActivityUi() {
+    val contexto = LocalContext.current
+    Text(
+        text = getAndroidId(contexto),
+        color = androidx.compose.ui.graphics.Color.White
+    )
+}
