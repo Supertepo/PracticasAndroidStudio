@@ -139,7 +139,8 @@ fun MainUI() {
 
             Text(
                 text = getAndroidId(contexto),
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
+                color = androidx.compose.ui.graphics.Color.White
             )
         }
     }

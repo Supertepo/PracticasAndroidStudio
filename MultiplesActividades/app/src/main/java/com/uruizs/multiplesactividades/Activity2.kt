@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
@@ -38,15 +40,16 @@ class Activity2 : AppCompatActivity() {
 @Composable
 fun Activity2UI(){
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     val contexto = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().padding(top = 40.dp)) {
         Row(Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = {
+            Button( colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red,
+                contentColor = Color.White
+            ),onClick = {
 
                 val intento= Intent(contexto, SaludoEstatico::class.java)
                 contexto.startActivity(intento)
@@ -55,7 +58,10 @@ fun Activity2UI(){
         }
         Row(Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,) {
-            Button(onClick = {
+            Button(colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red,
+                contentColor = Color.White
+            ),onClick = {
 
                 val intento= Intent(contexto, SaludoPersonalizado::class.java)
                 contexto.startActivity(intento)
@@ -65,7 +71,10 @@ fun Activity2UI(){
         Row(Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
-            Button(onClick = {
+            Button(colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Red,
+                contentColor = Color.White
+            ),onClick = {
 
                 val intento= Intent(contexto, Calculadora::class.java)
                 contexto.startActivity(intento)
