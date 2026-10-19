@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.uruizs.laberinto.ui.theme.LaberintoTheme
 import kotlin.math.max
 import kotlin.math.min
@@ -32,54 +33,95 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
 
-    // Estados normalizados o dinámicos de la esfera (porcentajes de la pantalla de 0f a 1f)
-    private var ballNormX by mutableFloatStateOf(0.20f)
-    private var ballNormY by mutableFloatStateOf(0.75f)
-    private val ballNormRadius = 0.02f // Radio relativo
+    // Entrada superior (donde está el ratón)
+    private var ballNormX by mutableFloatStateOf(0.44f)
+    private var ballNormY by mutableFloatStateOf(0.12f)
+    private val ballNormRadius = 0.014f
 
     private var hasWon by mutableStateOf(false)
 
-    // Laberinto definido con coordenadas relativas (porcentajes de 0.0 a 1.0)
-    // Esto garantiza que funcione en cualquier resolución y orientación.
+    /*
+       LABERINTO FIDELIDAD 1:1 CON LA IMAGEN
+       Con las paredes intermedias agregadas en la unión central para evitar atajos directos.
+    */
     private val normalizedWalls = listOf(
-        // --- MARCO EXTERIOR ---
-        WallNorm(0.15f, 0.10f, 0.90f, 0.10f),
-        WallNorm(0.15f, 0.10f, 0.15f, .90f),
-        //WallNorm(0.15f, 0.80f, 0.15f, 0.90f), // Entrada abajo izq
-        WallNorm(0.90f, 0.10f, 0.90f, 0.28f),
-        WallNorm(0.90f, 0.36f, 0.90f, 0.90f), // Salida der
-        WallNorm(0.15f, 0.90f, 0.90f, 0.90f),
+        // --- MARCO EXTERIOR ESCALONADO ---
+        WallNorm(0.40f, 0.08f, 0.90f, 0.08f), // Superior derecho
+        WallNorm(0.90f, 0.08f, 0.90f, 0.64f), // Lateral derecho superior
+        WallNorm(0.55f, 0.64f, 0.90f, 0.64f), // Borde medio derecho
+        WallNorm(0.55f, 0.64f, 0.55f, 0.90f), // Vertical interno inferior derecho
+        WallNorm(0.10f, 0.90f, 0.55f, 0.90f), // Base inferior
+        WallNorm(0.10f, 0.28f, 0.10f, 0.90f), // Lateral izquierdo
+        WallNorm(0.10f, 0.28f, 0.40f, 0.28f), // Escalón superior izquierdo
+        WallNorm(0.40f, 0.08f, 0.40f, 0.28f), // Borde entrada (Izquierda)
 
-        // --- PAREDES INTERNAS RELATIVAS ---
-        WallNorm(0.28f, 0.10f, 0.28f, 0.23f),
-        WallNorm(0.44f, 0.10f, 0.44f, 0.17f),
-        WallNorm(0.28f, 0.23f, 0.58f, 0.23f),
-        WallNorm(0.58f, 0.10f, 0.58f, 0.17f),
-        WallNorm(0.73f, 0.10f, 0.73f, 0.23f),
-        WallNorm(0.58f, 0.17f, 0.78f, 0.17f),
+        // --- PAREDES INTERNAS EN LA ZONA DE UNIÓN/CUELLO CENTRAL (EVITAN PASO DIRECTO) ---
+        WallNorm(0.40f, 0.48f, 0.47f, 0.48f), // Bloqueo horizontal centro-izquierda
+        WallNorm(0.47f, 0.48f, 0.47f, 0.60f), // Muro medio vertical en cuello
+        WallNorm(0.40f, 0.60f, 0.55f, 0.60f), // División horizontal en intersección
+        WallNorm(0.55f, 0.48f, 0.55f, 0.58f), // Muro interno vertical de conexión
+        WallNorm(0.47f, 0.55f, 0.55f, 0.55f), // Muro medio de división central
 
-        WallNorm(0.28f, 0.30f, 0.39f, 0.30f),
-        WallNorm(0.39f, 0.23f, 0.39f, 0.36f),
-        WallNorm(0.15f, 0.36f, 0.29f, 0.36f),
-        WallNorm(0.29f, 0.36f, 0.29f, 0.44f),
+        // --- BLOQUE SUPERIOR DERECHO ---
+        WallNorm(0.40f, 0.13f, 0.62f, 0.13f),
+        WallNorm(0.68f, 0.08f, 0.68f, 0.18f),
+        WallNorm(0.75f, 0.13f, 0.84f, 0.13f),
+        WallNorm(0.84f, 0.13f, 0.84f, 0.18f),
 
-        WallNorm(0.47f, 0.28f, 0.68f, 0.28f),
-        WallNorm(0.54f, 0.28f, 0.54f, 0.52f),
-        WallNorm(0.73f, 0.23f, 0.78f, 0.23f),
-        WallNorm(0.78f, 0.23f, 0.78f, 0.39f),
+        WallNorm(0.47f, 0.18f, 0.47f, 0.23f),
+        WallNorm(0.54f, 0.18f, 0.62f, 0.18f),
+        WallNorm(0.68f, 0.18f, 0.75f, 0.18f),
+        WallNorm(0.75f, 0.18f, 0.75f, 0.23f),
+        WallNorm(0.84f, 0.18f, 0.90f, 0.18f),
 
-        WallNorm(0.15f, 0.52f, 0.34f, 0.52f),
-        WallNorm(0.34f, 0.46f, 0.34f, 0.60f),
-        WallNorm(0.44f, 0.41f, 0.44f, 0.52f),
-        WallNorm(0.44f, 0.52f, 0.73f, 0.52f),
-        WallNorm(0.58f, 0.52f, 0.58f, 0.68f),
-        WallNorm(0.15f, 0.68f, 0.44f, 0.68f),
-        WallNorm(0.73f, 0.52f, 0.73f, 0.75f),
-        WallNorm(0.44f, 0.75f, 0.90f, 0.75f)
+        WallNorm(0.40f, 0.23f, 0.54f, 0.23f),
+        WallNorm(0.68f, 0.23f, 0.68f, 0.28f),
+        WallNorm(0.84f, 0.23f, 0.84f, 0.28f),
+
+        WallNorm(0.47f, 0.28f, 0.47f, 0.42f),
+        WallNorm(0.55f, 0.34f, 0.68f, 0.34f),
+        WallNorm(0.68f, 0.34f, 0.68f, 0.48f),
+        WallNorm(0.55f, 0.48f, 0.68f, 0.48f),
+        WallNorm(0.75f, 0.28f, 0.75f, 0.34f),
+        WallNorm(0.75f, 0.34f, 0.90f, 0.34f),
+        WallNorm(0.75f, 0.39f, 0.84f, 0.39f),
+        WallNorm(0.84f, 0.39f, 0.84f, 0.58f),
+
+        // --- BLOQUE INFERIOR IZQUIERDO ---
+        WallNorm(0.10f, 0.34f, 0.17f, 0.34f),
+        WallNorm(0.24f, 0.28f, 0.24f, 0.34f),
+        WallNorm(0.32f, 0.28f, 0.32f, 0.34f),
+        WallNorm(0.17f, 0.39f, 0.39f, 0.39f),
+        WallNorm(0.10f, 0.44f, 0.17f, 0.44f),
+        WallNorm(0.17f, 0.44f, 0.17f, 0.50f),
+        WallNorm(0.24f, 0.44f, 0.32f, 0.44f),
+
+        WallNorm(0.24f, 0.50f, 0.24f, 0.60f),
+        WallNorm(0.24f, 0.60f, 0.39f, 0.60f),
+        WallNorm(0.32f, 0.44f, 0.32f, 0.55f),
+
+        WallNorm(0.10f, 0.55f, 0.17f, 0.55f),
+        WallNorm(0.17f, 0.60f, 0.17f, 0.65f),
+        WallNorm(0.10f, 0.65f, 0.32f, 0.65f),
+
+        // Zona Inferior
+        WallNorm(0.17f, 0.71f, 0.39f, 0.71f),
+        WallNorm(0.39f, 0.60f, 0.39f, 0.71f),
+        WallNorm(0.17f, 0.71f, 0.17f, 0.76f),
+        WallNorm(0.17f, 0.76f, 0.47f, 0.76f),
+        WallNorm(0.39f, 0.76f, 0.39f, 0.81f),
+        WallNorm(0.17f, 0.81f, 0.32f, 0.81f),
+        WallNorm(0.32f, 0.81f, 0.32f, 0.86f),
+        WallNorm(0.24f, 0.86f, 0.24f, 0.90f),
+
+        // BLOQUE MEDIO DERECHO
+        WallNorm(0.62f, 0.48f, 0.62f, 0.58f),
+        WallNorm(0.62f, 0.58f, 0.68f, 0.58f),
+        WallNorm(0.68f, 0.53f, 0.75f, 0.53f)
     )
 
-    // Meta relativa
-    private val normalizedGoal = GoalNorm(0.89f, 0.28f, 0.94f, 0.36f)
+    // Meta (Salida al queso)
+    private val normalizedGoal = GoalNorm(0.52f, 0.82f, 0.57f, 0.89f)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,15 +132,12 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
         setContent {
             LaberintoTheme {
-                // Obtenemos la configuración para detectar cambios de orientación en tiempo real
                 val configuration = LocalConfiguration.current
                 val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-                // Dimensiones lógicas base sobre las cuales escalaremos el laberinto
                 val canvasWidth = if (isLandscape) 1920f else 1080f
                 val canvasHeight = if (isLandscape) 1080f else 1920f
 
-                // Convertir coordenadas normalizadas a píxeles actuales de la pantalla
                 val currentBallX = ballNormX * canvasWidth
                 val currentBallY = ballNormY * canvasHeight
                 val currentRadius = ballNormRadius * min(canvasWidth, canvasHeight)
@@ -124,8 +163,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                         goal = scaledGoal,
                         hasWon = hasWon,
                         onRestart = {
-                            ballNormX = 0.20f
-                            ballNormY = 0.75f
+                            ballNormX = 0.44f
+                            ballNormY = 0.12f
                             hasWon = false
                         },
                         modifier = Modifier.padding(innerPadding)
@@ -133,8 +172,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(bottom = 80.dp, start = 150.dp),
-                        contentAlignment = Alignment.BottomCenter
+                            .padding(bottom = 24.dp, start = 24.dp),
+                        contentAlignment = Alignment.BottomStart
                     ) {
                         MainActivityUi()
                     }
@@ -162,49 +201,45 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             val ax = event.values[0]
             val ay = event.values[1]
 
-            // Detectar orientación actual del dispositivo para ajustar los ejes del sensor
             val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-            // Si está horizontal, intercambiamos y ajustamos los ejes X e Y del acelerómetro
-            val rawDeltaX = if (isLandscape) ay * 0.0012f else -ax * 0.0012f
-            val rawDeltaY = if (isLandscape) ax * 0.0012f else ay * 0.0012f
+            val rawDeltaX = if (isLandscape) ay * 0.0009f else -ax * 0.0009f
+            val rawDeltaY = if (isLandscape) ax * 0.0009f else ay * 0.0009f
 
-            // Usamos sub-pasos normalizados para evitar que atraviese paredes en cualquier pantalla
-            val steps = 5
+            val steps = 10
             val stepX = rawDeltaX / steps
             val stepY = rawDeltaY / steps
 
             val canvasWidth = if (isLandscape) 1920f else 1080f
             val canvasHeight = if (isLandscape) 1080f else 1920f
 
+            val scaledWalls = normalizedWalls.map {
+                WallLine(
+                    it.startX * canvasWidth, it.startY * canvasHeight,
+                    it.endX * canvasWidth, it.endY * canvasHeight
+                )
+            }
+
+            val currentPixelRadius = ballNormRadius * min(canvasWidth, canvasHeight)
+
             for (i in 0 until steps) {
-                val nextNormX = ballNormX + (stepX)
-                val nextNormY = ballNormY + (stepY)
+                val nextNormX = ballNormX + stepX
+                val nextNormY = ballNormY + stepY
 
                 val nextPixelX = nextNormX * canvasWidth
                 val nextPixelY = nextNormY * canvasHeight
                 val currentPixelX = ballNormX * canvasWidth
                 val currentPixelY = ballNormY * canvasHeight
-                val currentPixelRadius = ballNormRadius * min(canvasWidth, canvasHeight)
 
-                val scaledWalls = normalizedWalls.map {
-                    WallLine(
-                        it.startX * canvasWidth, it.startY * canvasHeight,
-                        it.endX * canvasWidth, it.endY * canvasHeight
-                    )
-                }
-
-                // Validar eje X
                 if (!checkLineCollision(nextPixelX, currentPixelY, currentPixelRadius, scaledWalls)) {
                     ballNormX = nextNormX
                 }
-                // Validar eje Y
                 if (!checkLineCollision(currentPixelX, nextPixelY, currentPixelRadius, scaledWalls)) {
                     ballNormY = nextNormY
                 }
             }
 
-            // Comprobar meta de forma normalizada
+            // Detección de llegada a la meta
             if (ballNormX >= normalizedGoal.left && ballNormX <= normalizedGoal.right &&
                 ballNormY >= normalizedGoal.top && ballNormY <= normalizedGoal.bottom) {
                 hasWon = true
@@ -215,8 +250,13 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
     private fun checkLineCollision(cx: Float, cy: Float, radius: Float, lines: List<WallLine>): Boolean {
         for (line in lines) {
-            val closestX = clamp(cx, line.startX, line.endX)
-            val closestY = clamp(cy, line.startY, line.endY)
+            val minX = min(line.startX, line.endX)
+            val maxX = max(line.startX, line.endX)
+            val minY = min(line.startY, line.endY)
+            val maxY = max(line.startY, line.endY)
+
+            val closestX = clamp(cx, minX, maxX)
+            val closestY = clamp(cy, minY, maxY)
 
             val distX = cx - closestX
             val distY = cy - closestY
@@ -229,8 +269,8 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         return false
     }
 
-    private fun clamp(value: Float, min: Float, max: Float): Float {
-        return max(min(value, max(min, max)), min(min, max))
+    private fun clamp(value: Float, minVal: Float, maxVal: Float): Float {
+        return max(minVal, min(maxVal, value))
     }
 
     private fun playVictorySound() {
@@ -244,7 +284,6 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     }
 }
 
-// Estructuras de datos auxiliares para coordenadas relativas (normalizadas)
 data class WallNorm(val startX: Float, val startY: Float, val endX: Float, val endY: Float)
 data class GoalNorm(val left: Float, val top: Float, val right: Float, val bottom: Float)
 
@@ -253,11 +292,13 @@ fun getAndroidId(contexto: Context): String {
         contexto.contentResolver, Settings.Secure.ANDROID_ID
     ) ?: "DESCONOCIDO"
 }
+
 @Composable
 fun MainActivityUi() {
     val contexto = LocalContext.current
     Text(
-        text = getAndroidId(contexto),
-        color = androidx.compose.ui.graphics.Color.White
+        text = "ID: ${getAndroidId(contexto)}",
+        color = androidx.compose.ui.graphics.Color.Gray,
+        fontSize = 12.sp
     )
 }
